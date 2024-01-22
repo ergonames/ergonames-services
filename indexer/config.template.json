@@ -1,0 +1,11 @@
+{
+    "contractAddresses": {
+        "proxy": "",
+        "registry": "",
+        "subnames": ""
+    },
+    "networkInformation": {
+        "type": "",
+        "nodeUrl": ""
+    }
+}
