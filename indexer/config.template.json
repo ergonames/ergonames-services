@@ -1,11 +1,16 @@
 {
+    "ergonamesInformation": {
+        "registryCreationTransactionId": "4bfc833d60e89ef0d40b3fa2355b8de95552a7bef16ca182d67615f20e65578f",
+        "registrySingletonTokenId": "ca47874b9d946771597718585c79b16702311176d232e1d25279460a8983d0ad"
+    },
     "contractAddresses": {
-        "proxy": "",
-        "registry": "",
+        "proxy": "2PrWN3PfqnVov9qVftcdU9KmLFnbjdonedy8G2khFNVhQcXe1Wxq2bv3jv2oY5rDPh9H2srfS3wNpmQVRaYCCU863KbJmy1Yne4Y98vcdE6yppSd6AW3uJYryodhqMdMsDJCuvdRFS3q7a9wDpVoGEpxEWJvnJ38Z7TsSjihq43QWJ9iULao4yLmzD7Hs3kDKMeRRfbhJqRAn9dEooK4DABnY3iZeKRFg6pzxHdV2BLdmBXfAX",
+        "registry": "2EEAA53JWdSytmdgzYF4ry8csBWAmRDgDcgFE7JeC87sBtMMbKLTrbkcnMWVhVs4wKevWGzWDxS46SWjYVQFy8knym7qJZyEHf53ibJHZUGyzCGS9RLAx5xq5g8X8hm9ifGjMkdbcAjkSwwksojAY6cPJqSQz5S4PX3Wgf5gw4kAuKgZkPYDrLbxojRURin6dhtpGPZBVbBoaAoZNrnknHLmyHPp3dwbyVmLNes5VQiNMq9GZrSAu7Yz6i7fcqwJZU5grqwyKSmmeASxkwzEcTxgNFq69NS99BHUHtiFGG8Vr8VkmUyZdXeyvY8JVwuVs2Qb3i1DkMRn7u7HWcLCRZa34anTSrb7Cb79StWRGY3suWkuVLNCDAoNZ7A1pk5TsauWypt356R8jLTvXLYJobbQNGt2hRL9mAX2tdUkrkqYfVtTnEHqqXZUFtadJ5mrfbDq7kXxZ5EcsnGesNtBmNLZc8DhwmGF56wfcMwc7xhgNde5BQYm5dhE3TwykUy29c73UNGzH4fop3M8u7xzzV63pBuupEwDrEe3o1iKCsaKn4PMFgMem3u8v1QyaxJi4GhkX2pf9nFP1QUtR5J4CsiSpJfa9Hom8YftpFyFtDR4Xd4bnjA2L3UAi7YqQvNFnJRkHaTdc6B6y7VC5PPQuKXkmDHfGXANg9dUFgP1ciq6mjy8vxekaQAa5tsHxYxLqug5isDFEHKfabbiS9dqRRfCoSMp9fa3NNv5gpBr7cUGQHu2boF8NLCcDibYP6iqGofi9o2rai6LBjL1iVTByDvPNabpdEPHnsJ4yLZiibzXbPZUDSTktnhJ8aBJrnWn4ttcLAbtvG1cjR5niXUTuZT17zfr1ZLshJJcaV6uSb7AoDbEvMruDxrSYqVduBTjpfXnZTpGQkpyGsn7vB9mTqMzWWGYDnryThT8oumfHeQ8EDeJfTgyM5isdNM7rV8u7WQ6sQhK2jXwShuDxFW42cXvH6LXgiapQkfmAcGNy7wB2Bpxv4YeL59nSECYfVuMD5wRHCw6ZdvVULmajY3r53sZuAhwAimDgxapT8oKcTPeTtpeEq8b31QLvbB5eXHJQUJ7Z7SDHWg84yBSLyx6BwjKdriyWD16Fo5Q47PEgDE5LjhhgFtWt3",
         "subnames": ""
     },
     "networkInformation": {
-        "type": "",
-        "nodeUrl": ""
+        "type": "testnet",
+        "nodeUrl": "",
+        "explorerUrl": ""
     }
 }
