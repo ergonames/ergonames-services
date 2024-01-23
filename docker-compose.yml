@@ -1,0 +1,64 @@
+version: '3.8'
+
+networks:
+  ergonames-network:
+    driver: bridge
+
+services:
+  db:
+    container_name: ergonames-db
+    image: postgres:latest
+    networks:
+      - ergonames-network
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: ergonames
+      POSTGRES_USER: ergonames
+      POSTGRES_DB: ergonames
+    ports:
+      - 5432:5432
+    volumes:
+      - ./db:/var/lib/postgresql/data
+
+  pgadmin:
+    container_name: ergonames-pgadmin
+    image: dpage/pgadmin4:4.23
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@pgadmin.com
+      PGADMIN_DEFAULT_PASSWORD: password
+      PGADMIN_LISTEN_PORT: 80
+    ports:
+      - 15432:80
+    depends_on:
+      - db
+
+  indexer:
+    container_name: ergonames-indexer
+    networks:
+      - ergonames-network
+    build:
+      context: ./indexer
+      dockerfile: Dockerfile
+    restart: unless-stopped
+  
+  api:
+    container_name: ergonames-api
+    networks:
+      - ergonames-network
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - 3001:3001
+    restart: unless-stopped
+
+  dashboard:
+    container_name: ergonames-dashboard
+    networks:
+      - ergonames-network
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+    restart: unless-stopped
