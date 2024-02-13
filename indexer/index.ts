@@ -1,6 +1,6 @@
 import type { RegistrationInformation } from "./types/RegistrationInformation";
 import type { RegistryCreationInformation } from "./types/RegistryCreationInformation";
-import { createDatabaseSchema, writeToRegistrationTable } from "./utils/database";
+import { checkDatabaseConnection, createDatabaseSchema, writeToRegistrationTable } from "./utils/database";
 import { getInitialRegistryCreationInformation, getRegistryInformation } from "./utils/endpoints";
 
 async function main() {
@@ -22,6 +22,15 @@ async function main() {
     const networkType = networkInformation.type;
     const nodeUrl = networkInformation.nodeUrl;
     const explorerUrl = networkInformation.explorerUrl;
+
+    let connectedToDatabase = false;
+    while (!connectedToDatabase) {
+        connectedToDatabase = await checkDatabaseConnection();
+        if (!connectedToDatabase) {
+            console.log("Could not connect to database. Retrying in 5 seconds...");
+            await new Promise(r => setTimeout(r, 5000));
+        }
+    }
 
     await createDatabaseSchema();
 

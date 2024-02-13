@@ -1,10 +1,12 @@
-import postgres from 'postgres';
-import type { RegistrationInformation } from '../types/RegistrationInformation';
+import postgres from "postgres";
+import type { RegistrationInformation } from "../types/RegistrationInformation";
 
-const sql = postgres('postgres://ergonames:ergonames@localhost:5432/ergonames');
+const sql = postgres(
+  "postgres://ergonames:ergonames@ergonames-db:5432/ergonames",
+);
 
 export async function createDatabaseSchema() {
-    await sql`
+  await sql`
         CREATE TABLE IF NOT EXISTS registrations (
         ergoname_name VARCHAR(255) NOT NULL PRIMARY KEY,
         mint_transaction_id VARCHAR(64) NOT NULL,
@@ -17,8 +19,10 @@ export async function createDatabaseSchema() {
     `;
 }
 
-export async function writeToRegistrationTable(ergonameToRegister: RegistrationInformation) {
-    await sql`
+export async function writeToRegistrationTable(
+  ergonameToRegister: RegistrationInformation,
+) {
+  await sql`
         INSERT INTO registrations (
             ergoname_name,
             mint_transaction_id,
@@ -36,4 +40,13 @@ export async function writeToRegistrationTable(ergonameToRegister: RegistrationI
         ) ON CONFLICT (ergoname_name) DO UPDATE SET
             spent_transaction_id = ${ergonameToRegister.spendTransactionId}
     `;
+}
+
+export async function checkDatabaseConnection(): Promise<boolean> {
+  try {
+    await sql`SELECT 1`;
+    return true;
+  } catch (e) {
+    return false;
+  }
 }

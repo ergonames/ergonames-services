@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 networks:
   ergonames-network:
@@ -18,7 +18,7 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - ./db:/var/lib/postgresql/data
+      - ./.db:/var/lib/postgresql/data
 
   pgadmin:
     container_name: ergonames-pgadmin
@@ -40,7 +40,7 @@ services:
       context: ./indexer
       dockerfile: Dockerfile
     restart: unless-stopped
-  
+
   api:
     container_name: ergonames-api
     networks:
