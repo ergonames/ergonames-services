@@ -1,5 +1,6 @@
 import { randomInt } from "crypto";
 import express, { Request, Response } from "express";
+import fetch from "axios";
 import postgres from "postgres";
 const cors = require("cors");
 
@@ -33,6 +34,30 @@ app.get("/resolve/:name", async (req: Request, res: Response) => {
         SELECT * FROM registrations WHERE ergoname_name = ${name}
     `;
   res.json(query);
+});
+
+app.get("/owner/:name", async (req: Request, res: Response) => {
+  let name = req.params.name;
+  let query = await sql`
+        SELECT * FROM registrations WHERE ergoname_name = ${name}
+    `;
+  let token_id = query[0].ergoname_token_id;
+  let boxesUrl = `https://api-testnet.ergoplatform.com/api/v1/boxes/byTokenId/${token_id}`;
+  let amountBoxesUrl = boxesUrl + "?limit=1";
+  let totalBoxesResponse = await fetch(amountBoxesUrl);
+  let totalBoxes: any = totalBoxesResponse.data;
+  let total = totalBoxes.total;
+  let offset = 0;
+  while (total > 100) {
+    total -= 100;
+    offset += 100;
+  }
+  let boxes = await fetch(boxesUrl + `?limit=100&offset=${offset}`);
+  let boxesJson: any = boxes.data.items;
+  console.log(boxesJson);
+  let lastBox = boxesJson[boxesJson.length - 1];
+  let owner = lastBox.address;
+  res.json({ owner: owner });
 });
 
 app.get("/latest-registrations/:limit", async (req: Request, res: Response) => {
