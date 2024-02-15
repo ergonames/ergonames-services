@@ -1,4 +1,3 @@
-import { randomInt } from "crypto";
 import express, { Request, Response } from "express";
 import fetch from "axios";
 import postgres from "postgres";
@@ -16,15 +15,23 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 app.get("/info", async (req: Request, res: Response) => {
-  let pendingRegistrations = randomInt(10);
-  let totalRegistrations = await sql`
+  let pendingRegistrations = 0;
+  let result = await sql`
     SELECT COUNT(*) FROM registrations
   `;
-  totalRegistrations = totalRegistrations[0].count;
+  let totalRegistrations = parseInt(result[0].count, 10);
+
+  if (isNaN(pendingRegistrations) || isNaN(totalRegistrations)) {
+    return res
+      .status(500)
+      .json({ error: "Error fetching registration counts" });
+  }
+
   let info = {
     pendingRegistrations: pendingRegistrations,
     totalRegistrations: totalRegistrations,
   };
+
   res.json(info);
 });
 
