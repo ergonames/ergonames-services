@@ -43,24 +43,25 @@ app.get("/owner/:name", async (req: Request, res: Response) => {
     `;
   if (query.length === 0) {
     res.json({ message: "Name not found" });
+  } else {
+    let token_id = query[0].ergoname_token_id;
+    let boxesUrl = `https://api-testnet.ergoplatform.com/api/v1/boxes/byTokenId/${token_id}`;
+    let amountBoxesUrl = boxesUrl + "?limit=1";
+    let totalBoxesResponse = await fetch(amountBoxesUrl);
+    let totalBoxes: any = totalBoxesResponse.data;
+    let total = totalBoxes.total;
+    let offset = 0;
+    while (total > 100) {
+      total -= 100;
+      offset += 100;
+    }
+    let boxes = await fetch(boxesUrl + `?limit=100&offset=${offset}`);
+    let boxesJson: any = boxes.data.items;
+    console.log(boxesJson);
+    let lastBox = boxesJson[boxesJson.length - 1];
+    let owner = lastBox.address;
+    res.json({ owner: owner });
   }
-  let token_id = query[0].ergoname_token_id;
-  let boxesUrl = `https://api-testnet.ergoplatform.com/api/v1/boxes/byTokenId/${token_id}`;
-  let amountBoxesUrl = boxesUrl + "?limit=1";
-  let totalBoxesResponse = await fetch(amountBoxesUrl);
-  let totalBoxes: any = totalBoxesResponse.data;
-  let total = totalBoxes.total;
-  let offset = 0;
-  while (total > 100) {
-    total -= 100;
-    offset += 100;
-  }
-  let boxes = await fetch(boxesUrl + `?limit=100&offset=${offset}`);
-  let boxesJson: any = boxes.data.items;
-  console.log(boxesJson);
-  let lastBox = boxesJson[boxesJson.length - 1];
-  let owner = lastBox.address;
-  res.json({ owner: owner });
 });
 
 app.get("/latest-registrations/:limit", async (req: Request, res: Response) => {
