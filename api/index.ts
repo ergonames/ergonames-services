@@ -41,6 +41,9 @@ app.get("/owner/:name", async (req: Request, res: Response) => {
   let query = await sql`
         SELECT * FROM registrations WHERE ergoname_name = ${name}
     `;
+  if (query.length === 0) {
+    res.json({ message: "Name not found" });
+  }
   let token_id = query[0].ergoname_token_id;
   let boxesUrl = `https://api-testnet.ergoplatform.com/api/v1/boxes/byTokenId/${token_id}`;
   let amountBoxesUrl = boxesUrl + "?limit=1";
