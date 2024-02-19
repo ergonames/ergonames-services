@@ -37,10 +37,40 @@ app.get("/info", async (req: Request, res: Response) => {
 
 app.get("/resolve/:name", async (req: Request, res: Response) => {
   let name = req.params.name;
-  let query = await sql`
-        SELECT * FROM registrations WHERE ergoname_name = ${name}
-    `;
-  res.json(query);
+  if (!validSyntax(name)) {
+    let json = {
+      isValid: false,
+    };
+    res.json(json);
+  } else {
+    let query = await sql`
+          SELECT * FROM registrations WHERE ergoname_name = ${name}
+      `;
+    if (query.length === 0) {
+      let cost = getMintCost(name);
+      let fee = getTransactionFee();
+      let json = {
+        isValid: true,
+        isAvailable: true,
+        mintCost: cost,
+        transactionFee: fee,
+      };
+      res.json(json);
+    } else {
+      let json = {
+        isValid: true,
+        isAvailable: false,
+        ergoname: query[0].ergoname_name,
+        tokenId: query[0].ergoname_token_id,
+        mintTransactionId: query[0].mint_transaction_id,
+        mintBoxId: query[0].mint_box_id,
+        spentTransactionId: query[0].spent_transaction_id,
+        blockRegistered: query[0].block_registered,
+        registrationNumber: query[0].registration_number,
+      };
+      res.json(json);
+    }
+  }
 });
 
 app.get("/owner/:name", async (req: Request, res: Response) => {
@@ -84,10 +114,35 @@ app.get("/token/:tokenId", async (req: Request, res: Response) => {
   let query = await sql`
         SELECT * FROM registrations WHERE ergoname_token_id = ${tokenId}
     `;
-  res.json(query);
+  if (query.length === 0) {
+    res.json({ message: "Token not found" });
+  } else {
+    let json = {
+      ergoname: query[0].ergoname_name,
+      tokenId: query[0].ergoname_token_id,
+      mintTransactionId: query[0].mint_transaction_id,
+      mintBoxId: query[0].mint_box_id,
+      spentTransactionId: query[0].spent_transaction_id,
+      blockRegistered: query[0].block_registered,
+      registrationNumber: query[0].registration_number,
+    };
+    res.json(json);
+  }
 });
 
 const PORT = 3001;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+function validSyntax(_ergoname: string): boolean {
+  return true;
+}
+
+function getMintCost(_ergoname: string): number {
+  return 0.01;
+}
+
+function getTransactionFee(): number {
+  return 0.001;
+}
