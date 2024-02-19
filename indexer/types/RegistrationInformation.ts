@@ -1,8 +1,9 @@
 export interface RegistrationInformation {
-    ergonameRegistered: string,
-    ergonameTokenId: string,
-    mintBoxId: string,
-    mintTransactionId: string,
-    spendTransactionId: string,
-    blockRegistered: number
-};
+  ergonameRegistered: string;
+  ergonameTokenId: string;
+  mintBoxId: string;
+  mintTransactionId: string;
+  spendTransactionId: string;
+  blockRegistered: number;
+  timestampRegistered: number;
+}

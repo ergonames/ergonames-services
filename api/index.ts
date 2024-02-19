@@ -66,6 +66,7 @@ app.get("/resolve/:name", async (req: Request, res: Response) => {
         mintBoxId: query[0].mint_box_id,
         spentTransactionId: query[0].spent_transaction_id,
         blockRegistered: query[0].block_registered,
+        timestampRegistered: query[0].timestamp_registered,
         registrationNumber: query[0].registration_number,
       };
       res.json(json);
@@ -124,6 +125,7 @@ app.get("/token/:tokenId", async (req: Request, res: Response) => {
       mintBoxId: query[0].mint_box_id,
       spentTransactionId: query[0].spent_transaction_id,
       blockRegistered: query[0].block_registered,
+      timestampRegistered: query[0].timestamp_registered,
       registrationNumber: query[0].registration_number,
     };
     res.json(json);
