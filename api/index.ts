@@ -135,12 +135,18 @@ app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
-function validSyntax(_ergoname: string): boolean {
-  return true;
+function validSyntax(ergoname: string): boolean {
+  if (ergoname.length < 3 || ergoname.length > 25) {
+    return false;
+  }
+  let regex = /^[a-z0-9]+$/;
+  return regex.test(ergoname);
 }
 
-function getMintCost(_ergoname: string): number {
-  return 0.01;
+function getMintCost(ergoname: string): number {
+  let costPerCharacter = 0.5;
+  let cost = ergoname.length * costPerCharacter;
+  return cost;
 }
 
 function getTransactionFee(): number {
