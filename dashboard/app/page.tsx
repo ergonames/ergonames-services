@@ -68,21 +68,33 @@ export default function Home() {
           </table>
         </div>
         <div className="w-[30%]">
-          <table>
-            <thead>
-              <tr>
-                <th className="border-2 px-2 py-2">Total Registrations</th>
-                <th className="border-2 px-2 py-2">Pending Registrations</th>
-              </tr>
-            </thead>
+          <table className="text-center">
             <tbody>
               <tr>
+                <th className="w-[50%] border-2 px-2 py-2">
+                  Total Registrations
+                </th>
                 <td className="border-2 px-2 py-2">
                   {apiInfo?.totalRegistrations}
                 </td>
+              </tr>
+              <tr>
+                <th className="border-2 px-2 py-2">Pending Registrations</th>
                 <td className="border-2 px-2 py-2">
                   {apiInfo?.pendingRegistrations}
                 </td>
+              </tr>
+              <tr>
+                <th className="border-2 px-2 py-2">
+                  Registrations Last 24 Hours
+                </th>
+                <td className="border-2 px-2 py-2">{apiInfo?.last24Hours}</td>
+              </tr>
+              <tr>
+                <th className="border-2 px-2 py-2">
+                  Registrations Last 7 Days
+                </th>
+                <td className="border-2 px-2 py-2">{apiInfo?.last7Days}</td>
               </tr>
             </tbody>
           </table>

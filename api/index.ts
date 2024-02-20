@@ -27,9 +27,25 @@ app.get("/info", async (req: Request, res: Response) => {
       .json({ error: "Error fetching registration counts" });
   }
 
+  let currentTimestampInMilliseconds = Date.now();
+  let millisecondsInDay = 1000 * 60 * 60 * 24;
+
+  let last24Hours = await sql`
+    SELECT COUNT(*) FROM registrations WHERE timestamp_registered > ${currentTimestampInMilliseconds - millisecondsInDay}
+    `;
+  console.log(last24Hours);
+  let last7Days = await sql`
+    SELECT COUNT(*) FROM registrations WHERE timestamp_registered > ${currentTimestampInMilliseconds - millisecondsInDay * 7}
+    `;
+
+  let totalLast24Hours = parseInt(last24Hours[0].count, 10);
+  let totalLast7Days = parseInt(last7Days[0].count, 10);
+
   let info = {
     pendingRegistrations: pendingRegistrations,
     totalRegistrations: totalRegistrations,
+    last24Hours: totalLast24Hours,
+    last7Days: totalLast7Days,
   };
 
   res.json(info);
@@ -44,8 +60,8 @@ app.get("/resolve/:name", async (req: Request, res: Response) => {
     res.json(json);
   } else {
     let query = await sql`
-          SELECT * FROM registrations WHERE ergoname_name = ${name}
-      `;
+  SELECT * FROM registrations WHERE ergoname_name = ${name}
+  `;
     if (query.length === 0) {
       let cost = getMintCost(name);
       let fee = getTransactionFee();
@@ -77,8 +93,8 @@ app.get("/resolve/:name", async (req: Request, res: Response) => {
 app.get("/owner/:name", async (req: Request, res: Response) => {
   let name = req.params.name;
   let query = await sql`
-        SELECT * FROM registrations WHERE ergoname_name = ${name}
-    `;
+  SELECT * FROM registrations WHERE ergoname_name = ${name}
+  `;
   if (query.length === 0) {
     res.json({ message: "Name not found" });
   } else {
