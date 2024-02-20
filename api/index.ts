@@ -145,9 +145,32 @@ function validSyntax(ergoname: string): boolean {
   return regex.test(ergoname);
 }
 
+// Diamond(3 char): $500
+// Gold(4 char): $150
+// Silver (5-6 char): $50
+// Bronze (7-8 char): $15
+// Iron(>8 char): $5
+
 function getMintCost(ergoname: string): number {
-  let costPerCharacter = 0.5;
-  let cost = ergoname.length * costPerCharacter;
+  let cost = 0.0;
+  switch (ergoname.length) {
+    case 3:
+      cost = 500;
+      break;
+    case 4:
+      cost = 150;
+      break;
+    case 5:
+    case 6:
+      cost = 50;
+      break;
+    case 7:
+    case 8:
+      cost = 15;
+      break;
+    default:
+      cost = 5;
+  }
   return cost;
 }
 
