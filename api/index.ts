@@ -157,7 +157,7 @@ function validSyntax(ergoname: string): boolean {
   if (ergoname.length < 3 || ergoname.length > 25) {
     return false;
   }
-  let regex = /^[a-zA-Z0-9]+$/;
+  let regex = /^[a-zA-Z0-9_]+$/;
   return regex.test(ergoname);
 }
 
