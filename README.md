@@ -1,6 +1,6 @@
-# ErgoNames Typescript Services
+# ErgoNames Services
 
-This repository contains the Typescript services utilized for resolving ErgoNames. The services are divided into three modules: `indexer`, `api`, and `dashboard`.
+This repository contains the services utilized for resolving ErgoNames. The services are divided into three modules: `indexer`, `api`, and `dashboard`.
 
 ### Modules
 
