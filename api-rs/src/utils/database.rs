@@ -24,7 +24,7 @@ pub async fn read_ergoname_from_db(ergoname: &str) -> Result<Ergoname> {
     if rows_count == 0 {
         return Err(Error::msg("Ergoname not found in database"));
     }
-    let ergoname_data = rows.get(0).unwrap();
+    let ergoname_data = rows.first().unwrap();
     let ergoname = Ergoname {
         name: ergoname_data.get("ergoname_name"),
         token_id: ergoname_data.get("ergoname_token_id"),

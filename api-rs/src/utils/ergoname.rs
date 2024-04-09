@@ -9,21 +9,22 @@ pub fn check_ergoname_availability(ergoname: &str) -> bool {
 
 pub fn check_ergoname_validity(ergoname: &str) -> bool {
     let length = ergoname.len();
-    if length < 3 || length > 25 {
+    if !(3..=25).contains(&length) {
         return false;
     }
     let regex = Regex::new(r"^[a-zA-Z1-9-]+$").unwrap();
     if !regex.is_match(ergoname) {
         return false;
     }
-    return true;
+    true
 }
 
 pub fn get_current_mint_cost(ergoname: &str) -> u16 {
     if !check_ergoname_validity(ergoname) {
         return 0;
     }
-    let cost = match ergoname.len() {
+    
+    match ergoname.len() {
         3 => 500,
         4 => 150,
         5 => 50,
@@ -31,8 +32,7 @@ pub fn get_current_mint_cost(ergoname: &str) -> u16 {
         7 => 15,
         8 => 15,
         _ => 5,
-    };
-    return cost;
+    }
 }
 
 #[cfg(test)]
@@ -40,21 +40,20 @@ mod tests {
 
     #[test]
     fn test_check_ergoname_validity() {
-        assert_eq!(super::check_ergoname_validity("balb"), true);
-        assert_eq!(super::check_ergoname_validity("balb-"), true);
-        assert_eq!(super::check_ergoname_validity("balb-1"), true);
-        assert_eq!(super::check_ergoname_validity("ba"), false);
-        assert_eq!(
-            super::check_ergoname_validity("balbbalbbalbbalbbalbbalbbalb"),
-            false
+        assert!(super::check_ergoname_validity("balb"));
+        assert!(super::check_ergoname_validity("balb-"));
+        assert!(super::check_ergoname_validity("balb-1"));
+        assert!(!super::check_ergoname_validity("ba"));
+        assert!(
+            !super::check_ergoname_validity("balbbalbbalbbalbbalbbalbbalb")
         );
-        assert_eq!(super::check_ergoname_validity("balb!"), false);
+        assert!(!super::check_ergoname_validity("balb!"));
     }
 
     #[test]
     fn test_check_ergoname_availability() {
-        assert_eq!(super::check_ergoname_availability("mgpai"), false);
-        assert_eq!(super::check_ergoname_availability("gjdkskjfjskfjsjw"), true);
+        assert!(!super::check_ergoname_availability("mgpai"));
+        assert!(super::check_ergoname_availability("gjdkskjfjskfjsjw"));
     }
 
     #[test]
