@@ -13,6 +13,7 @@ export async function createDatabaseSchema() {
         mint_box_id VARCHAR(64) NOT NULL,
         spent_transaction_id VARCHAR(64),
         ergoname_token_id VARCHAR(64) NOT NULL,
+        registered_address VARCHAR(64) NOT NULL,
         block_registered INTEGER NOT NULL,
         timestamp_registered BIGINT NOT NULL,
         registration_number SERIAL NOT NULL
@@ -30,6 +31,7 @@ export async function writeToRegistrationTable(
             mint_box_id,
             spent_transaction_id,
             ergoname_token_id,
+            registered_address,
             block_registered,
             timestamp_registered
         ) VALUES (
@@ -38,6 +40,7 @@ export async function writeToRegistrationTable(
             ${ergonameToRegister.mintBoxId},
             ${ergonameToRegister.spendTransactionId},
             ${ergonameToRegister.ergonameTokenId},
+            "9gRQCYLc4Xz5ngFz6yZFhjuzU5NZecmAPxr879urTmvXkD2Fvb5",
             ${ergonameToRegister.blockRegistered},
             ${ergonameToRegister.timestampRegistered}
         ) ON CONFLICT (ergoname_name) DO UPDATE SET
