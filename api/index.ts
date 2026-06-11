@@ -7,8 +7,11 @@ const app = express();
 app.use(cors());
 
 const sql = postgres(
-  "postgres://ergonames:ergonames@ergonames-db:5432/ergonames",
+  process.env.DATABASE_URL ??
+    "postgres://ergonames:ergonames@ergonames-db:5432/ergonames",
 );
+const EXPLORER_URL =
+  process.env.EXPLORER_URL ?? "https://api.ergoplatform.com";
 
 app.get("/", (req: Request, res: Response) => {
   res.json({ message: "ErgoNames API" });
@@ -98,23 +101,18 @@ app.get("/owner/:name", async (req: Request, res: Response) => {
   if (query.length === 0) {
     res.json({ message: "Name not found" });
   } else {
+    // The ErgoName token has two live units: the owner's wallet box and the
+    // subname registry box (a contract). The owner is the P2PK holder.
     let token_id = query[0].ergoname_token_id;
-    let boxesUrl = `https://api-testnet.ergoplatform.com/api/v1/boxes/byTokenId/${token_id}`;
-    let amountBoxesUrl = boxesUrl + "?limit=1";
-    let totalBoxesResponse = await fetch(amountBoxesUrl);
-    let totalBoxes: any = totalBoxesResponse.data;
-    let total = totalBoxes.total;
-    let offset = 0;
-    while (total > 100) {
-      total -= 100;
-      offset += 100;
+    let boxesUrl = `${EXPLORER_URL}/api/v1/boxes/unspent/byTokenId/${token_id}`;
+    let boxes = await fetch(boxesUrl);
+    let items: any[] = boxes.data.items ?? [];
+    let p2pk = items.find((b: any) => b.address && b.address.length <= 60);
+    if (!p2pk) {
+      res.json({ message: "Owner box not found" });
+    } else {
+      res.json({ owner: p2pk.address });
     }
-    let boxes = await fetch(boxesUrl + `?limit=100&offset=${offset}`);
-    let boxesJson: any = boxes.data.items;
-    console.log(boxesJson);
-    let lastBox = boxesJson[boxesJson.length - 1];
-    let owner = lastBox.address;
-    res.json({ owner: owner });
   }
 });
 
@@ -161,33 +159,13 @@ function validSyntax(ergoname: string): boolean {
   return regex.test(ergoname);
 }
 
-// Diamond(3 char): $500
-// Gold(4 char): $150
-// Silver (5-6 char): $50
-// Bronze (7-8 char): $15
-// Iron(>8 char): $5
+// Mirrors the on-chain registry price map (R7, USD by name length;
+// the last entry applies to all longer names).
+const PRICE_MAP_USD = [9999, 100, 50, 25, 10, 5, 3, 2, 1];
 
 function getMintCost(ergoname: string): number {
-  let cost = 0.0;
-  switch (ergoname.length) {
-    case 3:
-      cost = 500;
-      break;
-    case 4:
-      cost = 150;
-      break;
-    case 5:
-    case 6:
-      cost = 50;
-      break;
-    case 7:
-    case 8:
-      cost = 15;
-      break;
-    default:
-      cost = 5;
-  }
-  return cost;
+  const idx = Math.min(ergoname.length, PRICE_MAP_USD.length - 1);
+  return PRICE_MAP_USD[idx];
 }
 
 function getTransactionFee(): number {

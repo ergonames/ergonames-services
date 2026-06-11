@@ -1,50 +1,61 @@
 import type { RegistrationInformation } from "../types/RegistrationInformation";
-import type { RegistryCreationInformation } from "../types/RegistryCreationInformation";
-import { decodeFromBase16Register } from "./decode";
 
-export async function getInitialRegistryCreationInformation(
-  initialTransactionId: string,
-  explorerUrl: string,
-): Promise<RegistryCreationInformation> {
-  let urlPath = "/api/v1/transactions/" + initialTransactionId;
-  let url = explorerUrl + urlPath;
-  let response = await fetch(url);
-  let json: any = await response.json();
-  let transactionId: string = json.id;
-  let boxId: string = json.outputs[0].boxId;
-  let spentTransactionId: string = json.outputs[0].spentTransactionId;
-  let irci: RegistryCreationInformation = {
-    transactionId: transactionId,
-    boxId: boxId,
-    spentTransactionId: spentTransactionId,
-  };
-  return irci;
+export interface RegistryHop {
+  transactionId: string;
+  isMint: boolean;
+  nextSpendTransactionId: string | null;
+  registration: RegistrationInformation | null;
 }
 
-export async function getRegistryInformation(
-  tx: string,
+// Follows the registry box chain one transaction at a time. The registry
+// output is identified by the registry singleton token. A hop is a mint when
+// the registry sits at output index 1 with the issuance box at index 0 (the
+// v1 mint layout); genesis, seeding, and escape-hatch upgrades carry the
+// singleton at index 0 and are followed but not recorded.
+export async function getRegistryHop(
+  txId: string,
   explorerUrl: string,
-): Promise<RegistrationInformation> {
-  let urlPath = "/api/v1/transactions/" + tx;
-  let url = explorerUrl + urlPath;
-  console.log(url);
-  let response = await fetch(url);
-  let json: any = await response.json();
-  let transactionId: string = json.id;
-  let boxId: string = json.outputs[0].boxId;
-  let spentTransactionId: string = json.outputs[1].spentTransactionId;
-  let ergonameName: string = json.outputs[0].assets[0].name;
-  let tokenId: string = json.outputs[0].assets[0].tokenId;
-  let blockRegistered: number = json.outputs[0].settlementHeight;
-  let timestampRegistered: number = json.timestamp;
-  let ri: RegistrationInformation = {
-    ergonameRegistered: ergonameName,
-    ergonameTokenId: tokenId,
-    mintBoxId: boxId,
-    mintTransactionId: transactionId,
-    spendTransactionId: spentTransactionId,
-    blockRegistered: blockRegistered,
-    timestampRegistered: timestampRegistered,
+  registrySingletonTokenId: string,
+): Promise<RegistryHop> {
+  const url = `${explorerUrl}/api/v1/transactions/${txId}`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`explorer returned ${response.status} for ${txId}`);
+  }
+  const json: any = await response.json();
+
+  const registryIndex = json.outputs.findIndex((o: any) =>
+    (o.assets ?? []).some((a: any) => a.tokenId === registrySingletonTokenId),
+  );
+  if (registryIndex < 0) {
+    throw new Error(`registry singleton not found in outputs of ${txId}`);
+  }
+  const registryOutput = json.outputs[registryIndex];
+
+  const isMint =
+    registryIndex === 1 &&
+    json.outputs.length === 6 &&
+    (json.outputs[0].assets ?? []).length > 0;
+
+  let registration: RegistrationInformation | null = null;
+  if (isMint) {
+    const issuance = json.outputs[0];
+    registration = {
+      ergonameRegistered: issuance.assets[0].name.replace(/^~/, ""),
+      ergonameTokenId: issuance.assets[0].tokenId,
+      mintBoxId: issuance.boxId,
+      mintTransactionId: json.id,
+      spendTransactionId: registryOutput.spentTransactionId ?? null,
+      registeredAddress: issuance.address,
+      blockRegistered: issuance.settlementHeight,
+      timestampRegistered: json.timestamp,
+    };
+  }
+
+  return {
+    transactionId: json.id,
+    isMint: isMint,
+    nextSpendTransactionId: registryOutput.spentTransactionId ?? null,
+    registration: registration,
   };
-  return ri;
 }

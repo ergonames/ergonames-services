@@ -2,7 +2,8 @@ import postgres from "postgres";
 import type { RegistrationInformation } from "../types/RegistrationInformation";
 
 const sql = postgres(
-  "postgres://ergonames:ergonames@ergonames-db:5432/ergonames",
+  process.env.DATABASE_URL ??
+    "postgres://ergonames:ergonames@ergonames-db:5432/ergonames",
 );
 
 export async function createDatabaseSchema() {
@@ -19,10 +20,17 @@ export async function createDatabaseSchema() {
         registration_number SERIAL NOT NULL
         );
     `;
+  await sql`
+        CREATE TABLE IF NOT EXISTS indexer_state (
+        id INTEGER PRIMARY KEY DEFAULT 1,
+        last_processed_tx VARCHAR(64) NOT NULL,
+        CONSTRAINT single_row CHECK (id = 1)
+        );
+    `;
 }
 
 export async function writeToRegistrationTable(
-  ergonameToRegister: RegistrationInformation,
+  r: RegistrationInformation,
 ) {
   await sql`
         INSERT INTO registrations (
@@ -35,16 +43,28 @@ export async function writeToRegistrationTable(
             block_registered,
             timestamp_registered
         ) VALUES (
-            ${ergonameToRegister.ergonameRegistered},
-            ${ergonameToRegister.mintTransactionId},
-            ${ergonameToRegister.mintBoxId},
-            ${ergonameToRegister.spendTransactionId},
-            ${ergonameToRegister.ergonameTokenId},
-            "9gRQCYLc4Xz5ngFz6yZFhjuzU5NZecmAPxr879urTmvXkD2Fvb5",
-            ${ergonameToRegister.blockRegistered},
-            ${ergonameToRegister.timestampRegistered}
+            ${r.ergonameRegistered},
+            ${r.mintTransactionId},
+            ${r.mintBoxId},
+            ${r.spendTransactionId},
+            ${r.ergonameTokenId},
+            ${r.registeredAddress},
+            ${r.blockRegistered},
+            ${r.timestampRegistered}
         ) ON CONFLICT (ergoname_name) DO UPDATE SET
-            spent_transaction_id = ${ergonameToRegister.spendTransactionId}
+            spent_transaction_id = ${r.spendTransactionId}
+    `;
+}
+
+export async function loadLastProcessedTx(): Promise<string | null> {
+  const rows = await sql`SELECT last_processed_tx FROM indexer_state WHERE id = 1`;
+  return rows.length > 0 ? rows[0].last_processed_tx : null;
+}
+
+export async function saveLastProcessedTx(txId: string) {
+  await sql`
+        INSERT INTO indexer_state (id, last_processed_tx) VALUES (1, ${txId})
+        ON CONFLICT (id) DO UPDATE SET last_processed_tx = ${txId}
     `;
 }
 

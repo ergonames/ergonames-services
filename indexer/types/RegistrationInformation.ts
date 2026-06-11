@@ -3,7 +3,8 @@ export interface RegistrationInformation {
   ergonameTokenId: string;
   mintBoxId: string;
   mintTransactionId: string;
-  spendTransactionId: string;
+  spendTransactionId: string | null;
+  registeredAddress: string;
   blockRegistered: number;
   timestampRegistered: number;
 }
