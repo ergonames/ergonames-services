@@ -34,7 +34,11 @@ export interface ReverseResult {
     primary: string | null;
     names: OwnedName[];
 }
-/** Strip the leading ~ and surrounding whitespace from user input. */
+/**
+ * Strip the leading ~ and whitespace, and lowercase. Registered names are
+ * lowercase-only (charset policy), so resolution is case-insensitive by
+ * normalizing the query.
+ */
 export declare function normalize(name: string): string;
 /** Syntactic check only — says nothing about availability. */
 export declare function isValidName(name: string): boolean;

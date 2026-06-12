@@ -10,9 +10,13 @@
 //   primaryName(address)     -> what to display instead of a raw address
 const DEFAULT_API = "https://api.ergonames.io";
 const NAME_RE = /^[a-zA-Z0-9_]{1,25}$/;
-/** Strip the leading ~ and surrounding whitespace from user input. */
+/**
+ * Strip the leading ~ and whitespace, and lowercase. Registered names are
+ * lowercase-only (charset policy), so resolution is case-insensitive by
+ * normalizing the query.
+ */
 export function normalize(name) {
-    return name.trim().replace(/^~/, "");
+    return name.trim().replace(/^~/, "").toLowerCase();
 }
 /** Syntactic check only — says nothing about availability. */
 export function isValidName(name) {
