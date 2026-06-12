@@ -1,0 +1,30 @@
+{
+  "name": "@ergonames/sdk",
+  "version": "0.1.0",
+  "description": "Resolve ErgoNames (~name) to Ergo addresses, and addresses back to names. Zero dependencies, works in browsers, Node 18+, and Bun.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ergonames/ergonames-services.git",
+    "directory": "sdk"
+  },
+  "keywords": ["ergo", "ergonames", "blockchain", "naming", "resolver", "web3"],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "publishConfig": { "access": "public" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "smoke": "bun run smoke.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}
