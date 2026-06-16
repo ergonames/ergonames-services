@@ -25,8 +25,14 @@ export interface ResolveResult {
   isAvailable?: boolean;
   /** True when the name is reserved and mintable only with verification. */
   isReserved?: boolean;
-  /** Current holder's P2PK address (live — reflects NFT transfers). */
+  /** Current holder's P2PK address (reflects NFT transfers). */
   owner?: string | null;
+  /** How `owner` was resolved: "indexed" (fast), "live" (verified), or "live-fallback". */
+  source?: "indexed" | "live" | "live-fallback";
+  /** Block height the indexed owner is current as of (null on the live path). */
+  asOfHeight?: number | null;
+  /** "p2pk" | "contract" | "ambiguous" — null on the live path. */
+  ownerType?: string | null;
   /** The name's NFT token id. */
   tokenId?: string;
   /** Registration metadata (present when registered). */
@@ -84,21 +90,39 @@ export class ErgoNames {
     return res.json() as Promise<T>;
   }
 
-  /** Full resolution record for a name. */
-  async resolve(name: string): Promise<ResolveResult> {
+  /**
+   * Full resolution record for a name.
+   *
+   * `verified` selects the resolution path (see the dual-path design):
+   *   - false (default): the INDEXED path — fast, returns `source:"indexed"`
+   *     and an `asOfHeight` freshness stamp. Right for display.
+   *   - true: the VERIFIED path — a live chain lookup, always current but
+   *     slower. Right before moving money.
+   */
+  async resolve(
+    name: string,
+    opts: { verified?: boolean } = {},
+  ): Promise<ResolveResult> {
     const n = normalize(name);
     if (!NAME_RE.test(n)) return { name: n, isValid: false };
-    const r = await this.get<Omit<ResolveResult, "name">>(`/resolve/${n}`);
+    const q = opts.verified ? "?verified=true" : "";
+    const r = await this.get<Omit<ResolveResult, "name">>(`/resolve/${n}${q}`);
     return { name: n, ...r };
   }
 
   /**
    * The call wallets want: current address behind a name, or null when the
-   * name is unregistered. Throws only on network/API failure, so callers can
-   * distinguish "no such name" (null) from "couldn't check" (throw).
+   * name is unregistered. DEFAULTS TO THE VERIFIED PATH — this call moves
+   * money, so correctness beats latency. Pass `{ verified: false }` for the
+   * fast indexed path when a wrong answer only costs a re-render. Throws only
+   * on network/API failure, so callers can distinguish "no such name" (null)
+   * from "couldn't check" (throw) and never send funds on a failed check.
    */
-  async resolveAddress(name: string): Promise<string | null> {
-    const r = await this.resolve(name);
+  async resolveAddress(
+    name: string,
+    opts: { verified?: boolean } = {},
+  ): Promise<string | null> {
+    const r = await this.resolve(name, { verified: opts.verified ?? true });
     return r.owner ?? null;
   }
 

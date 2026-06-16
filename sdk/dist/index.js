@@ -38,21 +38,33 @@ export class ErgoNames {
             throw new Error(`ErgoNames API ${res.status} on ${path}`);
         return res.json();
     }
-    /** Full resolution record for a name. */
-    async resolve(name) {
+    /**
+     * Full resolution record for a name.
+     *
+     * `verified` selects the resolution path (see the dual-path design):
+     *   - false (default): the INDEXED path — fast, returns `source:"indexed"`
+     *     and an `asOfHeight` freshness stamp. Right for display.
+     *   - true: the VERIFIED path — a live chain lookup, always current but
+     *     slower. Right before moving money.
+     */
+    async resolve(name, opts = {}) {
         const n = normalize(name);
         if (!NAME_RE.test(n))
             return { name: n, isValid: false };
-        const r = await this.get(`/resolve/${n}`);
+        const q = opts.verified ? "?verified=true" : "";
+        const r = await this.get(`/resolve/${n}${q}`);
         return { name: n, ...r };
     }
     /**
      * The call wallets want: current address behind a name, or null when the
-     * name is unregistered. Throws only on network/API failure, so callers can
-     * distinguish "no such name" (null) from "couldn't check" (throw).
+     * name is unregistered. DEFAULTS TO THE VERIFIED PATH — this call moves
+     * money, so correctness beats latency. Pass `{ verified: false }` for the
+     * fast indexed path when a wrong answer only costs a re-render. Throws only
+     * on network/API failure, so callers can distinguish "no such name" (null)
+     * from "couldn't check" (throw) and never send funds on a failed check.
      */
-    async resolveAddress(name) {
-        const r = await this.resolve(name);
+    async resolveAddress(name, opts = {}) {
+        const r = await this.resolve(name, { verified: opts.verified ?? true });
         return r.owner ?? null;
     }
     /** True when the name is registered to someone. */
