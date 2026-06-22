@@ -58,6 +58,12 @@ Show a name instead of a raw address wherever you list recipients/contacts:
 const label = (await ergonames.primaryName(addr)) ?? shorten(addr); // never throws
 ```
 
+## Beta now → launch
+ErgoNames is currently in **beta on mainnet** — a throwaway phase (test names, no guarantees). At public launch we'll cut a **fresh genesis** (new registry + collection) with the finalized contracts. The **SDK API surface is stable** — `resolveAddress` / `primaryName` / `ChainResolver` won't change, so your integration won't need rework. What changes underneath:
+- **API client (Option A):** nothing to do — `api.ergonames.io` switches to the launch registry automatically.
+- **ChainResolver (Option B):** the genesis constants (`genesisTxId`, `registrySingletonTokenId`) are baked in; we'll ship an SDK release with the launch values — bump the package at launch, or pass them via options. We'll give integrators the new version + a heads-up ahead of the cutover.
+- **Names:** beta registrations don't carry to launch (beta holders migrate / re-claim), so integrate and test freely now — just don't treat beta-resolved names as permanent yet.
+
 ## Notes
 - All calls are async — debounce the send-field resolve on input.
 - TypeScript types are bundled (`.d.ts`).
