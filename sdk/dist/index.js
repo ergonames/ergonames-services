@@ -100,3 +100,6 @@ export class ErgoNames {
 }
 /** Shared default-config instance for one-line usage. */
 export const ergonames = new ErgoNames();
+// Direct-chain resolution (no ErgoNames server in the path) — reads names and
+// owners straight from an Ergo explorer/node you choose. See ./chain.
+export { ChainResolver, chain, ergoNameFromRevealR9, } from "./chain.js";

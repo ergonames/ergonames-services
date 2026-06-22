@@ -1,7 +1,7 @@
 {
-  "name": "@ergonames/sdk",
-  "version": "0.2.0",
-  "description": "Resolve ErgoNames (~name) to Ergo addresses, and addresses back to names. Zero dependencies, works in browsers, Node 18+, and Bun.",
+  "name": "ergonames",
+  "version": "1.0.1",
+  "description": "Resolve ErgoNames (~name) to Ergo addresses and back — via the ErgoNames API or directly from any Ergo node/explorer. Zero dependencies; browsers, Node 18+, and Bun.",
   "license": "MIT",
   "repository": {
     "type": "git",

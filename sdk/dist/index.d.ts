@@ -90,3 +90,4 @@ export declare class ErgoNames {
 }
 /** Shared default-config instance for one-line usage. */
 export declare const ergonames: ErgoNames;
+export { ChainResolver, chain, ergoNameFromRevealR9, type ChainResolverOptions, } from "./chain.js";

@@ -14,7 +14,7 @@ both tiny:
 **1. Send-to-name.** When the recipient field starts with `~`, resolve it:
 
 ```ts
-import { ergonames } from "@ergonames/sdk";
+import { ergonames } from "ergonames";
 const address = await ergonames.resolveAddress(input); // null = not registered
 ```
 
