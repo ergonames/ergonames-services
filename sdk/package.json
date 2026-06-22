@@ -1,6 +1,6 @@
 {
   "name": "ergonames",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Resolve ErgoNames (~name) to Ergo addresses and back — via the ErgoNames API or directly from any Ergo node/explorer. Zero dependencies; browsers, Node 18+, and Bun.",
   "license": "MIT",
   "repository": {

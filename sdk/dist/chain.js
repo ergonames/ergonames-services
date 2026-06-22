@@ -1,9 +1,11 @@
 // Direct-chain ErgoNames resolution — NO ErgoNames server in the path.
 //
-// Reads straight from an Ergo explorer (or your own node's explorer-compatible
-// API). Resolution is trustless: a name's owner is whoever currently holds its
-// NFT on-chain, and the name itself is the CONSENSUS name from the reveal box's
-// R9 — not the spoofable EIP-4 display register.
+// Reads straight from either a public Ergo **explorer** (Explorer v1 API) or
+// your own **node** (`/blockchain/...`, requires extraIndex) — auto-detected
+// from the URL, so a wallet can point at its own node and depend on nobody.
+// Resolution is trustless: a name's owner is whoever currently holds its NFT
+// on-chain, and the name itself is the CONSENSUS name from the reveal box's R9 —
+// not the spoofable EIP-4 display register.
 //
 // How it works (mirrors the official indexer):
 //   - `tokenId → owner`: query the unspent box holding the name token; the
@@ -69,6 +71,7 @@ export class ChainResolver {
     registryToken;
     timeoutMs;
     refreshTtlMs;
+    mode; // null = auto-detect on first use
     // Built forward index + reverse lookup, with the spend-chain cursor for
     // incremental extension.
     nameToToken = new Map();
@@ -83,6 +86,7 @@ export class ChainResolver {
         this.registryToken = options.registrySingletonTokenId ?? MAINNET.registrySingletonTokenId;
         this.timeoutMs = options.timeoutMs ?? 12000;
         this.refreshTtlMs = options.refreshTtlMs ?? 15000;
+        this.mode = options.source ?? null;
         this.cursorTx = this.genesisTxId;
     }
     async get(path) {
@@ -91,8 +95,72 @@ export class ChainResolver {
             headers: { accept: "application/json" },
         });
         if (!res.ok)
-            throw new Error(`explorer ${res.status} on ${path}`);
+            throw new Error(`${res.status} on ${path}`);
         return res.json();
+    }
+    /** Resolve the backend API once and cache it: an Ergo node serves
+     *  `/blockchain/indexedHeight`; an explorer 404s it. */
+    async detectMode() {
+        if (this.mode)
+            return this.mode;
+        try {
+            const res = await fetch(this.explorerUrl + "/blockchain/indexedHeight", {
+                signal: AbortSignal.timeout(this.timeoutMs),
+                headers: { accept: "application/json" },
+            });
+            this.mode = res.ok ? "node" : "explorer";
+        }
+        catch {
+            this.mode = "explorer";
+        }
+        return this.mode;
+    }
+    /** A transaction by id. Explorer and node return compatible inputs/outputs:
+     *  each output carries assets + additionalRegisters + spentTransactionId, each
+     *  input carries boxId + additionalRegisters (node registers are hex strings,
+     *  explorer registers are `{serializedValue}` — both handled downstream). */
+    async fetchTx(txId) {
+        const mode = await this.detectMode();
+        return this.get(mode === "node"
+            ? `/blockchain/transaction/byId/${txId}`
+            : `/api/v1/transactions/${txId}`);
+    }
+    /** Unspent boxes holding a token, normalized to `{ address, height }`. The
+     *  node returns a bare array with `inclusionHeight`; the explorer wraps the
+     *  list in `items` with `settlementHeight`. */
+    async fetchUnspentByToken(tokenId) {
+        const mode = await this.detectMode();
+        if (mode === "node") {
+            const arr = await this.get(`/blockchain/box/unspent/byTokenId/${tokenId}`);
+            return (Array.isArray(arr) ? arr : []).map((b) => ({
+                address: b.address ?? null,
+                height: b.inclusionHeight ?? 0,
+            }));
+        }
+        const j = await this.get(`/api/v1/boxes/unspent/byTokenId/${tokenId}`);
+        return (j.items ?? []).map((b) => ({
+            address: b.address ?? null,
+            height: b.settlementHeight ?? 0,
+        }));
+    }
+    /** Confirmed token balance for an address. The node takes a POST body and
+     *  nests tokens under `confirmed`; the explorer is a GET. */
+    async fetchBalanceTokens(address) {
+        const mode = await this.detectMode();
+        if (mode === "node") {
+            const res = await fetch(this.explorerUrl + "/blockchain/balance", {
+                method: "POST",
+                signal: AbortSignal.timeout(this.timeoutMs),
+                headers: { "content-type": "text/plain", accept: "application/json" },
+                body: address,
+            });
+            if (!res.ok)
+                throw new Error(`${res.status} on /blockchain/balance`);
+            const j = await res.json();
+            return j?.confirmed?.tokens ?? [];
+        }
+        const j = await this.get(`/api/v1/addresses/${address}/balance/confirmed`);
+        return j.tokens ?? [];
     }
     /** Walk the registry spend chain from the cursor to the tip, recording mints.
      *  Idempotent + incremental; concurrent callers share one in-flight build. */
@@ -106,7 +174,7 @@ export class ChainResolver {
         this.building = (async () => {
             let txId = this.cursorTx;
             while (txId) {
-                const tx = await this.get(`/api/v1/transactions/${txId}`);
+                const tx = await this.fetchTx(txId);
                 const regIdx = tx.outputs.findIndex((o) => (o.assets ?? []).some((a) => a.tokenId === this.registryToken));
                 if (regIdx < 0)
                     break; // not a registry tx (shouldn't happen) — stop
@@ -145,14 +213,14 @@ export class ChainResolver {
     }
     /** Current on-chain owner of a name token (the P2PK holder), or null. */
     async lookupOwner(tokenId) {
-        const j = await this.get(`/api/v1/boxes/unspent/byTokenId/${tokenId}`);
-        const p2pk = (j.items ?? []).filter((b) => b.address && b.address.length <= 60);
+        const boxes = await this.fetchUnspentByToken(tokenId);
+        const p2pk = boxes.filter((b) => b.address && b.address.length <= 60);
         if (p2pk.length === 0)
             return { owner: null, ownerType: "contract" };
         if (p2pk.length === 1)
             return { owner: p2pk[0].address, ownerType: "p2pk" };
         // Multiple P2PK holders — anomalous (e.g. duplicate-token vector); newest wins.
-        const newest = p2pk.reduce((a, b) => (b.settlementHeight ?? 0) > (a.settlementHeight ?? 0) ? b : a);
+        const newest = p2pk.reduce((a, b) => (b.height > a.height ? b : a));
         return { owner: newest.address, ownerType: "ambiguous" };
     }
     /** Full resolution record for a name, read live from the chain. */
@@ -195,10 +263,10 @@ export class ChainResolver {
         if (!/^[a-zA-Z0-9]{40,60}$/.test(address))
             throw new Error("invalid Ergo address");
         await this.ensureIndex();
-        const bal = await this.get(`/api/v1/addresses/${address}/balance/confirmed`);
+        const tokens = await this.fetchBalanceTokens(address);
         const held = [];
         let primary = null;
-        for (const t of bal.tokens ?? []) {
+        for (const t of tokens) {
             const entry = this.tokenToName.get(t.tokenId);
             if (!entry)
                 continue;

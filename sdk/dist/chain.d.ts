@@ -1,8 +1,13 @@
 import type { ResolveResult, ReverseResult } from "./index.js";
 export interface ChainResolverOptions {
-    /** Ergo explorer base URL (explorer-compatible API). Point at your own node
-     *  or a public explorer. Default: the public Ergo explorer. */
+    /** Base URL of the data source — a public Ergo **explorer** (Explorer v1 API)
+     *  or your own **node** with `extraIndex` enabled. The API surface is
+     *  auto-detected (a node serves `/blockchain/...`, an explorer `/api/v1/...`),
+     *  so the same URL field works for either. Default: the public Ergo explorer. */
     explorerUrl?: string;
+    /** Skip auto-detection and force the backend: "explorer" (Explorer v1) or
+     *  "node" (Ergo node `/blockchain/...`, requires extraIndex). */
+    source?: "explorer" | "node";
     /** Registry genesis transaction id (chain head of the registry spend chain). */
     genesisTxId?: string;
     /** Registry singleton token id (identifies the registry box across hops). */
@@ -22,6 +27,7 @@ export declare class ChainResolver {
     private registryToken;
     private timeoutMs;
     private refreshTtlMs;
+    private mode;
     private nameToToken;
     private tokenToName;
     private cursorTx;
@@ -30,6 +36,21 @@ export declare class ChainResolver {
     private building;
     constructor(options?: ChainResolverOptions);
     private get;
+    /** Resolve the backend API once and cache it: an Ergo node serves
+     *  `/blockchain/indexedHeight`; an explorer 404s it. */
+    private detectMode;
+    /** A transaction by id. Explorer and node return compatible inputs/outputs:
+     *  each output carries assets + additionalRegisters + spentTransactionId, each
+     *  input carries boxId + additionalRegisters (node registers are hex strings,
+     *  explorer registers are `{serializedValue}` — both handled downstream). */
+    private fetchTx;
+    /** Unspent boxes holding a token, normalized to `{ address, height }`. The
+     *  node returns a bare array with `inclusionHeight`; the explorer wraps the
+     *  list in `items` with `settlementHeight`. */
+    private fetchUnspentByToken;
+    /** Confirmed token balance for an address. The node takes a POST body and
+     *  nests tokens under `confirmed`; the explorer is a GET. */
+    private fetchBalanceTokens;
     /** Walk the registry spend chain from the cursor to the tip, recording mints.
      *  Idempotent + incremental; concurrent callers share one in-flight build. */
     private ensureIndex;
